@@ -51,6 +51,33 @@ fn fs_main_default(
 // 	fragColor = vec4(col,1.0);
 // }
 
+fn max2(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
+    return vec2<f32>(
+        max(a.x, b.x),
+        max(a.y, b.y)
+    );
+}
+
+fn splat2(v: f32) -> vec2<f32> {
+    return vec2<f32>(v, v);
+}
+
+fn splat3(v: f32) -> vec3<f32> {
+    return vec3<f32>(v, v, v);
+}
+
+fn splat4(v: f32) -> vec4<f32> {
+    return vec4<f32>(v, v, v, v);
+}
+
+fn mix3(a: vec3<f32>, b: vec3<f32>, d: f32) -> vec3<f32> {
+    return vec3<f32>(
+        mix(a.x, b.x, d),
+        mix(a.y, b.y, d),
+        mix(a.z, b.z, d)
+    );
+}
+
 fn sd_round_box(p: vec2<f32>, b: vec2<f32>, in_r: vec4<f32>) -> f32 {
     var r: vec4<f32>;
 
@@ -74,29 +101,11 @@ fn sd_round_box(p: vec2<f32>, b: vec2<f32>, in_r: vec4<f32>) -> f32 {
     const q = abs(p) - b + vec2<f32>(r.x, r.x);
 //     vec2 q = abs(p)-b+r.x;
 //     return min(max(q.x,q.y),0.0) + length(max(q,0.0)) - r.x;
-     return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r.x;
+     return min(max(q.x, q.y), 0.0) + length(max2(q, splat2(0.0))) - r.x;
     // return 0.0;
 }
 
-fn splat2(v: f32) -> vec2<f32> {
-    return vec2<f32>(v, v);
-}
 
-fn splat3(v: f32) -> vec3<f32> {
-    return vec3<f32>(v, v, v);
-}
-
-fn splat4(v: f32) -> vec4<f32> {
-    return vec4<f32>(v, v, v, v);
-}
-
-fn mix3(a: vec3<f32>, b: vec3<f32>, d: f32) -> vec3 {
-    return vec3<f32>(
-        mix(a.x, b.x, d),
-        mix(a.y, b.y, d)
-        mix(a.z, b.z, d)
-    );
-}
 
 [[stage(fragment)]]
 fn fs_main(
