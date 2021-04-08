@@ -1,3 +1,4 @@
+[[block]]
 struct Uniforms {
     width: u32;
     height: u32;
@@ -14,7 +15,6 @@ struct Uniforms {
 
 
 
-
 [[stage(vertex)]]
 fn vs_main([[builtin(vertex_index)]] vertex_index: u32) -> [[builtin(position)]] vec4<f32> {
     // var out: vec2<f32>;
@@ -26,3 +26,4 @@ fn vs_main([[builtin(vertex_index)]] vertex_index: u32) -> [[builtin(position)]]
     return vec4<f32>(out.x, out.y, 0.0, 1.0);
 
 }
+
