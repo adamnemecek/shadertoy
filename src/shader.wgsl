@@ -51,10 +51,51 @@ fn fs_main_default(
 // 	fragColor = vec4(col,1.0);
 // }
 
+fn min2(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
+    return vec2<f32>(
+        min(a.x, b.x),
+        min(a.y, b.y)
+    );
+}
+
+fn min3(a: vec3<f32>, b: vec3<f32>) -> vec3<f32> {
+    return vec3<f32>(
+        min(a.x, b.x),
+        min(a.y, b.y),
+        min(a.z, b.z)
+    );
+}
+
+fn min4(a: vec4<f32>, b: vec4<f32>) -> vec4<f32> {
+    return vec4<f32>(
+        min(a.x, b.x),
+        min(a.y, b.y),
+        min(a.z, b.z),
+        min(a.w, b.w)
+    );
+}
+
 fn max2(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
     return vec2<f32>(
         max(a.x, b.x),
         max(a.y, b.y)
+    );
+}
+
+fn max3(a: vec3<f32>, b: vec3<f32>) -> vec3<f32> {
+    return vec3<f32>(
+        max(a.x, b.x),
+        max(a.y, b.y),
+        max(a.z, b.z)
+    );
+}
+
+fn max4(a: vec4<f32>, b: vec4<f32>) -> vec4<f32> {
+    return vec4<f32>(
+        max(a.x, b.x),
+        max(a.y, b.y),
+        max(a.z, b.z),
+        max(a.w, b.w)
     );
 }
 
