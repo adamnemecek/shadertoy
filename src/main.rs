@@ -20,12 +20,8 @@ pub struct ShaderConstants {
     pub mouse_left_clicked: bool,
 }
 
-
 unsafe fn as_u8_slice<T: Sized>(p: &T) -> &[u8] {
-    ::std::slice::from_raw_parts(
-        (p as *const T) as *const u8,
-        ::std::mem::size_of::<T>(),
-    )
+    ::std::slice::from_raw_parts((p as *const T) as *const u8, ::std::mem::size_of::<T>())
 }
 
 async fn run(
@@ -69,19 +65,19 @@ async fn run(
     //     .await
     //     .expect("Failed to create device");
     let (device, queue) = adapter
-    .request_device(
-        &wgpu::DeviceDescriptor {
-            label: None,
-            features: wgpu::Features::PUSH_CONSTANTS,
-            limits: wgpu::Limits {
-                max_push_constant_size: 4096,
-                ..Default::default()
+        .request_device(
+            &wgpu::DeviceDescriptor {
+                label: None,
+                features: wgpu::Features::PUSH_CONSTANTS,
+                limits: wgpu::Limits {
+                    max_push_constant_size: 4096,
+                    ..Default::default()
+                },
             },
-        },
-        None,
-    )
-    .await
-    .expect("Failed to create device");
+            None,
+        )
+        .await
+        .expect("Failed to create device");
 
     // Load the shaders from disk
     let shader = device.create_shader_module(shader_descriptor);
@@ -204,8 +200,9 @@ async fn run(
                         .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
                     {
                         let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                            color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                                attachment: &frame.view,
+                            label: None,
+                            color_attachments: &[wgpu::RenderPassColorAttachment {
+                                view: &frame.view,
                                 resolve_target: None,
                                 ops: wgpu::Operations {
                                     load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
@@ -310,7 +307,7 @@ fn main() {
 
     let shader_desc = wgpu::ShaderModuleDescriptor {
         label: None,
-        source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!("shader.wgsl"))),
+        source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(&prelude)),
         flags: wgpu::ShaderFlags::all(),
     };
 
