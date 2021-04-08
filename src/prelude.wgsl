@@ -1,14 +1,3 @@
-[[block]]
-struct Uniforms {
-    resolution: vec2<f32>;
-    frame: f32;
-    time: f32;
-    cursor: vec2<f32>;
-    drag_start: vec2<f32>;
-    drag_end: vec2<f32>;
-    mouse_left_pressed: bool;
-    mouse_left_clicked: bool;
-};
 
 
 [[stage(vertex)]]
