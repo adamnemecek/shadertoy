@@ -45,25 +45,7 @@ async fn run(
         .await
         .expect("Failed to find an appropriate adapter");
 
-    let features = wgpu::Features::PUSH_CONSTANTS;
-    let limits = wgpu::Limits {
-        max_push_constant_size: 256,
-        ..Default::default()
-    };
-
     // Create the logical device and command queue
-    // let (device, queue) = adapter
-    //     .request_device(
-    //         &wgpu::DeviceDescriptor {
-    //             label: None,
-    //             features,
-    //             limits,
-    //             // shader_validation: true,
-    //         },
-    //         None,
-    //     )
-    //     .await
-    //     .expect("Failed to create device");
     let (device, queue) = adapter
         .request_device(
             &wgpu::DeviceDescriptor {
@@ -90,37 +72,6 @@ async fn run(
             range: 0..std::mem::size_of::<ShaderConstants>() as u32,
         }],
     });
-
-    // let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-    //     label: None,
-    //     layout: Some(&pipeline_layout),
-    //     vertex: wgpu::VertexState {
-    //         module: &module,
-    //         entry_point: "main_vs",
-    //         buffers: &[],
-    //     },
-    //     fragment: Some(wgpu::FragmentState {
-    //         module: &module,
-    //         entry_point: "main_fs",
-    //         targets: &[]
-    //     }),
-    //     // Use the default rasterizer state: no culling, no depth bias
-    //     // rasterization_state: None,
-    //     primitive: wgpu::PrimitiveState {
-    //         topology: wgpu::PrimitiveTopology::TriangleList,
-    //         ..Default::default()
-    //     },
-    //     // primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-    //     color_states: &[swapchain_format.into()],
-    //     depth_stencil: None,
-    //     vertex_state: wgpu::VertexStateDescriptor {
-    //         index_format: wgpu::IndexFormat::Uint16,
-    //         vertex_buffers: &[],
-    //     },
-    //     sample_count: 1,
-    //     sample_mask: !0,
-    //     alpha_to_coverage_enabled: false,
-    // });
 
     let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: None,
@@ -298,13 +249,6 @@ fn main() {
 
     let source = format!("{}{}", prelude, shader);
 
-    // wgpu_subscriber::initialize_default_subscriber(None);
-    // futures::executor::block_on(run(
-    //     wgpu::include_spirv!(env!("shadertoys_shaders.spv")),
-    //     event_loop,
-    //     window,
-    //     wgpu::TextureFormat::Bgra8UnormSrgb,
-    // ));
     let format = wgpu::TextureFormat::Bgra8UnormSrgb;
 
     let shader_desc = wgpu::ShaderModuleDescriptor {
