@@ -7,8 +7,9 @@ use winit::{
 #[allow(unused_attributes)]
 // #[spirv(block)]
 pub struct ShaderConstants {
-    pub width: u32,
-    pub height: u32,
+    pub width: f32,
+    pub height: f32,
+    pub frame: f32,
     pub time: f32,
     pub cursor_x: f32,
     pub cursor_y: f32,
@@ -110,6 +111,8 @@ async fn run(
     let mut mouse_left_pressed = false;
     let mut mouse_left_clicked = false;
 
+    let mut frame_count = 0.0;
+
     event_loop.run(move |event, _, control_flow| {
         // Have the closure take ownership of the resources.
         // `event_loop.run` never returns, therefore we must do this to ensure
@@ -163,8 +166,9 @@ async fn run(
                             depth_stencil_attachment: None,
                         });
                         let push_constants = ShaderConstants {
-                            width: window.inner_size().width,
-                            height: window.inner_size().height,
+                            width: window.inner_size().width as _,
+                            height: window.inner_size().height as _,
+                            frame: frame_count,
                             time: start.elapsed().as_secs_f32(),
                             cursor_x,
                             cursor_y,
@@ -181,6 +185,8 @@ async fn run(
                             as_u8_slice(&push_constants)
                         });
                         rpass.draw(0..3, 0..1);
+
+                        frame_count += 1.0;
                     }
 
                     queue.submit(Some(encoder.finish()));
