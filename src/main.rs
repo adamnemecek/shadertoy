@@ -296,6 +296,8 @@ fn main() {
     let prelude = std::fs::read_to_string("prelude.wgsl").unwrap();
     let shader = std::fs::read_to_string("shader.wgsl").unwrap();
 
+    let source = format!("{}{}", prelude, shader);
+
     // wgpu_subscriber::initialize_default_subscriber(None);
     // futures::executor::block_on(run(
     //     wgpu::include_spirv!(env!("shadertoys_shaders.spv")),
@@ -307,7 +309,7 @@ fn main() {
 
     let shader_desc = wgpu::ShaderModuleDescriptor {
         label: None,
-        source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(&prelude)),
+        source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(&source)),
         flags: wgpu::ShaderFlags::all(),
     };
 
