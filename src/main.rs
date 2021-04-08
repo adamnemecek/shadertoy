@@ -250,8 +250,12 @@ fn main() {
         .build(&event_loop)
         .unwrap();
     // join files
-    let prelude = std::fs::read_to_string("prelude.wgsl").unwrap();
-    let shader = std::fs::read_to_string("shader.wgsl").unwrap();
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let prelude_path = root.join("src/prelude.wgsl");
+    let shader_path = root.join("src/shader.wgsl");
+
+    let prelude = std::fs::read_to_string(prelude_path).unwrap();
+    let shader = std::fs::read_to_string(shader_path).unwrap();
 
     let source = format!("{}{}", prelude, shader);
 
