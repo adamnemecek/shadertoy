@@ -10,3 +10,4 @@ edition = "2018"
 wgpu = { git = "https://github.com/gfx-rs/wgpu-rs/" , rev = "82b7068498864de44bbdf3e02d086c03d83a04e0" }
 winit = { git = "https://github.com/adamnemecek/winit", rev = "8fb77892bdb785045396700391195b10eaf656d8" }
 pollster = "0.2"
+notify = "*"

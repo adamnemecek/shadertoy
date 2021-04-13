@@ -3,23 +3,9 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
-#[derive(Copy, Clone)]
-#[allow(unused_attributes)]
-// #[spirv(block)]
-pub struct ShaderConstants {
-    pub width: f32,
-    pub height: f32,
-    pub frame: f32,
-    pub time: f32,
-    pub cursor_x: f32,
-    pub cursor_y: f32,
-    pub drag_start_x: f32,
-    pub drag_start_y: f32,
-    pub drag_end_x: f32,
-    pub drag_end_y: f32,
-    pub mouse_left_pressed: bool,
-    pub mouse_left_clicked: bool,
-}
+
+mod shader;
+pub use shader::*;
 
 unsafe fn as_u8_slice<T: Sized>(p: &T) -> &[u8] {
     ::std::slice::from_raw_parts((p as *const T) as *const u8, ::std::mem::size_of::<T>())
@@ -28,9 +14,8 @@ unsafe fn as_u8_slice<T: Sized>(p: &T) -> &[u8] {
 async fn run(
     event_loop: EventLoop<()>,
     window: Window,
-    // shader: wgpu::ShaderModule,
-    shader_descriptor: &wgpu::ShaderModuleDescriptor<'_>,
     swapchain_format: wgpu::TextureFormat,
+    rx: std::sync::mpsc::Receiver<notify::DebouncedEvent>,
 ) {
     let size = window.inner_size();
     let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
@@ -62,36 +47,6 @@ async fn run(
         .await
         .expect("Failed to create device");
 
-    // Load the shaders from disk
-    let shader = device.create_shader_module(shader_descriptor);
-
-    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-        label: None,
-        bind_group_layouts: &[],
-        push_constant_ranges: &[wgpu::PushConstantRange {
-            stages: wgpu::ShaderStage::all(),
-            range: 0..std::mem::size_of::<ShaderConstants>() as u32,
-        }],
-    });
-
-    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: None,
-        layout: Some(&pipeline_layout),
-        vertex: wgpu::VertexState {
-            module: &shader,
-            entry_point: "vs_main",
-            buffers: &[],
-        },
-        fragment: Some(wgpu::FragmentState {
-            module: &shader,
-            entry_point: "fs_main",
-            targets: &[swapchain_format.into()],
-        }),
-        primitive: wgpu::PrimitiveState::default(),
-        depth_stencil: None,
-        multisample: wgpu::MultisampleState::default(),
-    });
-
     let mut sc_desc = wgpu::SwapChainDescriptor {
         usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
         format: swapchain_format,
@@ -103,6 +58,8 @@ async fn run(
     let mut swap_chain = surface
         .as_ref()
         .map(|surface| device.create_swap_chain(&surface, &sc_desc));
+
+    let mut shader = Shader::new(&device, swapchain_format);
 
     let start = std::time::Instant::now();
     let (mut cursor_x, mut cursor_y) = (0.0, 0.0);
@@ -117,11 +74,20 @@ async fn run(
         // Have the closure take ownership of the resources.
         // `event_loop.run` never returns, therefore we must do this to ensure
         // the resources are properly cleaned up.
-        let _ = (&instance, &adapter, &shader, &pipeline_layout);
+        let _ = (&instance, &adapter, &shader);
 
         *control_flow = ControlFlow::Poll;
         match event {
             Event::MainEventsCleared => {
+                for n in rx.try_recv() {
+                    match n {
+                        notify::DebouncedEvent::Write(_) => {
+                            shader.rebuild(&device, swapchain_format);
+                        }
+                        _ => {}
+                    }
+
+                }
                 window.request_redraw();
             }
             Event::Resumed => {
@@ -153,13 +119,19 @@ async fn run(
                     let mut encoder = device
                         .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
                     {
+                        let clear_color = wgpu::Color {
+                            r: 0.2,
+                            g: 0.2,
+                            b: 0.25,
+                            a: 1.0,
+                        };
                         let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                             label: None,
                             color_attachments: &[wgpu::RenderPassColorAttachment {
                                 view: &frame.view,
                                 resolve_target: None,
                                 ops: wgpu::Operations {
-                                    load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
+                                    load: wgpu::LoadOp::Clear(clear_color),
                                     store: true,
                                 },
                             }],
@@ -180,7 +152,7 @@ async fn run(
                             mouse_left_clicked,
                         };
                         mouse_left_clicked = false;
-                        rpass.set_pipeline(&render_pipeline);
+                        rpass.set_pipeline(shader.pipeline());
                         rpass.set_push_constants(wgpu::ShaderStage::all(), 0, unsafe {
                             as_u8_slice(&push_constants)
                         });
@@ -249,23 +221,19 @@ fn main() {
         .with_inner_size(winit::dpi::LogicalSize::new(1280.0, 720.0))
         .build(&event_loop)
         .unwrap();
-    // join files
+    // join filesd
     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let prelude_path = root.join("src/prelude.wgsl");
+
     let shader_path = root.join("src/shader.wgsl");
 
-    let prelude = std::fs::read_to_string(prelude_path).unwrap();
-    let shader = std::fs::read_to_string(shader_path).unwrap();
-
-    let source = format!("{}{}", prelude, shader);
+    use notify::{Watcher};
+    let (tx, rx) = std::sync::mpsc::channel();
+    let mut watcher = notify::watcher(tx, std::time::Duration::from_millis(500)).unwrap();
+    watcher
+        .watch(&shader_path, notify::RecursiveMode::NonRecursive)
+        .unwrap();
 
     let format = wgpu::TextureFormat::Bgra8UnormSrgb;
 
-    let shader_desc = wgpu::ShaderModuleDescriptor {
-        label: None,
-        source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(&source)),
-        flags: wgpu::ShaderFlags::all(),
-    };
-
-    pollster::block_on(run(event_loop, window, &shader_desc, format));
+    pollster::block_on(run(event_loop, window, format, rx));
 }
